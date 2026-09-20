@@ -1,0 +1,8 @@
+verdict,anomaly_type,confidence,impact,action,explanation
+sensor_fault,bias,0.98,low,Log + low-priority dashboard notification,Voltage reading inconsistent with measured current/power.
+genuine_grid_event,voltage_sag,0.55,high,Escalate to human operator (precaution),Voltage dropped sharply; current rose consistently.
+sensor_fault,too_clean,0.6,high,Escalate to human operator (precaution),Signal variance far below normal for this window.
+genuine_grid_event,outage,0.97,high,Escalate to human operator immediately,"Voltage, current, and power all dropped to zero together."
+sensor_fault,drift,0.8,low,Log + low-priority dashboard notification,Voltage has been steadily rising over the past hour.
+sensor_fault,stuck_sensor,0.85,medium,"Log + notify, review within 24 hours",Voltage has not changed at all for 40 minutes.
+genuine_grid_event,thd_spike,0.9,medium,"Log + notify, review within 24 hours","Harmonic distortion elevated, consistent with equipment fault."
