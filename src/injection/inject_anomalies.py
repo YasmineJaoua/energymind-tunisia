@@ -43,11 +43,13 @@ def pick_windows(n_rows, n_windows, min_gap=500):
 # --- Genuine grid event injectors -----------------------------------
 
 def inject_voltage_sag(df, start, length):
-    drop = rng.uniform(0.10, 0.25)  # 10-25% voltage drop
+    drop = rng.uniform(0.10, 0.25)
     idx = slice(start, start + length)
     df.loc[df.index[idx], "Voltage"] *= (1 - drop)
-    # A real sag also affects current (higher current to maintain power)
-    df.loc[df.index[idx], "Global_intensity"] *= (1 + drop * 0.8)
+    # Full compensation: a constant-power load draws more current as
+    # voltage drops, keeping actual power roughly unchanged - this
+    # matches the physics our discriminator checks against.
+    df.loc[df.index[idx], "Global_intensity"] /= (1 - drop)
     return "voltage_sag", "genuine_grid_event"
 
 
@@ -55,8 +57,8 @@ def inject_voltage_swell(df, start, length):
     rise = rng.uniform(0.10, 0.20)
     idx = slice(start, start + length)
     df.loc[df.index[idx], "Voltage"] *= (1 + rise)
+    df.loc[df.index[idx], "Global_intensity"] /= (1 + rise)
     return "voltage_swell", "genuine_grid_event"
-
 
 def inject_outage(df, start, length):
     idx = slice(start, start + length)
@@ -98,15 +100,20 @@ def inject_stuck_sensor(df, start, length):
 
 def inject_bias(df, start, length):
     idx = slice(start, start + length)
-    offset = rng.uniform(-15, 15)
+    # Guarantee a meaningful offset (not too close to 0), both
+    # directions possible - a real sensor calibration fault is
+    # rarely a negligible 1-2V shift
+    offset = rng.choice([-1, 1]) * rng.uniform(8, 20)
     df.loc[df.index[idx], "Voltage"] += offset
     return "bias", "sensor_fault"
 
 
 def inject_falsified_spike(df, start, length):
-    # Short, random garbage values - simulates comms glitch / spoofing
-    idx_range = np.arange(start, start + min(length, 10))
-    df.loc[df.index[idx_range], "Voltage"] = rng.uniform(0, 400, size=len(idx_range))
+    # Modify the full window (not just first 10 rows) so the label
+    # correctly matches what was actually altered - simulates a
+    # sustained comms glitch/spoofing burst rather than one instant
+    idx = slice(start, start + length)
+    df.loc[df.index[idx], "Voltage"] = rng.uniform(0, 400, size=length)
     return "falsified_spike", "sensor_fault"
 
 
