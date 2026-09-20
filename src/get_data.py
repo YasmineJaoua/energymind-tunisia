@@ -77,6 +77,14 @@ def load_and_clean():
     df["power_factor"] = df["Global_active_power"] / df["apparent_power"]
     # Guard against divide-by-zero when apparent power is ~0 (e.g. no load)
     df["power_factor"] = df["power_factor"].clip(upper=1.0)
+     # Synthetic baseline signals (not present in the real dataset) —
+    # frequency and THD can't be derived from household consumption data,
+    # so we simulate realistic baseline values here, and inject deviations
+    # into them later during anomaly injection.
+    import numpy as np
+    rng = np.random.default_rng(seed=42)  # fixed seed = reproducible results
+    df["frequency"] = 50.0 + rng.normal(0, 0.02, size=len(df))  # Tunisia/EU grid: 50Hz nominal
+    df["thd"] = np.clip(rng.normal(3.0, 0.7, size=len(df)), 0.5, None)  # typical household THD %
     return df
 
 
