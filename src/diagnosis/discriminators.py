@@ -14,22 +14,28 @@ from sklearn.metrics import classification_report, confusion_matrix
 DATA_PATH = Path("data/processed/labeled_data.parquet")
 
 
-def physical_consistency_check(df, tolerance=0.05):
-    """
-    Compares actual active power to power expected from
-    Voltage x Current x power_factor. A mismatch suggests one signal
-    has drifted/biased away from physical reality - a sensor fault,
-    not a real grid event.
-    """
-    expected_power = (
-        df["Voltage"] * df["Global_intensity"] * df["power_factor"] / 1000
-    )
+def physical_consistency_check(df, power_pct=99, voltage_pct=97):
+    expected_power = df["Voltage"] * df["Global_intensity"] * df["power_factor"] / 1000
     actual_power = df["Global_active_power"]
-    denom = expected_power.abs().clip(lower=0.05)
-    relative_error = (actual_power - expected_power).abs() / denom
+    power_error = (actual_power - expected_power).abs()
 
-    df["physical_inconsistency"] = relative_error
-    df["physical_check_flag"] = relative_error > tolerance
+    denom = (df["Global_intensity"] * df["power_factor"]).clip(lower=0.5)
+    implied_voltage = (actual_power * 1000) / denom
+    voltage_error = (df["Voltage"] - implied_voltage).abs()
+
+    df["physical_inconsistency"] = power_error
+
+    # Calibrate only on STABLE normal rows (meaningful current flowing) -
+    # near-zero-current moments make voltage_error swing wildly even
+    # under completely normal conditions, which would otherwise inflate
+    # the tolerance and make the check useless
+    stable_normal = (df["label"] == "normal") & (df["Global_intensity"] > 2)
+
+    power_tol = power_error[stable_normal].quantile(power_pct / 100)
+    voltage_tol = voltage_error[stable_normal].quantile(voltage_pct / 100)
+    print(f"Power tolerance: {power_tol:.4f} kW | Voltage tolerance: {voltage_tol:.4f} V")
+
+    df["physical_check_flag"] = (power_error > power_tol) | (voltage_error > voltage_tol)
     return df
 
 
@@ -78,14 +84,11 @@ def classify(df):
             df["low_variance_flag"],
             df["physical_check_flag"],
         ],
-        [
-            "genuine_grid_event",
-            "sensor_fault",
-            "sensor_fault",
-        ],
+        ["genuine_grid_event", "sensor_fault", "sensor_fault"],
         default="genuine_grid_event",
     )
     return df
+
 
 
 def main():
@@ -115,6 +118,7 @@ def main():
         true_label = subset["label"].iloc[0]
         correct = (subset["diagnosed_as"] == true_label).mean()
         print(f"  {atype} (true={true_label}): {correct:.1%} correctly diagnosed")
+
 
 
 if __name__ == "__main__":
