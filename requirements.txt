@@ -5,3 +5,5 @@ pyarrow
 jupyter
 matplotlib
 seaborn
+scikit-learn
+joblib
