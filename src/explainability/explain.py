@@ -13,6 +13,9 @@ from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend, safe for script use
+import matplotlib.pyplot as plt
 
 DATA_PATH = Path("data/processed/labeled_data.parquet")
 MODEL_DIR = Path("models")
@@ -118,7 +121,22 @@ def main():
 
     for feat, val in sorted(zip(FEATURES, mean_abs), key=lambda x: -float(x[1])):
         print(f"  {feat}: {float(val):.4f}")
+ # Save a SHAP summary bar plot as a report figure
+    figures_dir = Path("reports") / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
 
+    plt.figure()
+    shap.summary_plot(
+        shap_array, X_test, feature_names=FEATURES,
+        plot_type="bar", show=False,
+    )
+    plt.title("SHAP Feature Importance — Genuine Grid Event vs Sensor Fault")
+    plt.tight_layout()
+    fig_path = figures_dir / "shap_feature_importance.png"
+    plt.savefig(fig_path, dpi=150)
+    plt.close()
+    print(f"\nSaved SHAP summary plot to {fig_path}")
+    
     # Example: explain a few individual anomalies
     print("\n--- Example individual explanations ---")
     sample = X_test.sample(5, random_state=1)

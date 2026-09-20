@@ -1,6 +1,6 @@
 row_index,verdict,confidence,explanation
 1880740,sensor_fault,0.9818227701906956,Verdict: sensor_fault (confidence: 98%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.151) pointed toward this verdict.
 624600,sensor_fault,0.9551812292836562,Verdict: sensor_fault (confidence: 96%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.209) pointed toward this verdict.
-569459,genuine_grid_event,0.9785028666980952,Verdict: genuine_grid_event (confidence: 98%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.000) pointed toward this verdict.
-1343659,sensor_fault,0.9976936049877925,Verdict: sensor_fault (confidence: 100%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.383) pointed toward this verdict.
+569459,genuine_grid_event,0.978502866698095,Verdict: genuine_grid_event (confidence: 98%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.000) pointed toward this verdict.
+1343659,sensor_fault,0.9976936049877927,Verdict: sensor_fault (confidence: 100%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.383) pointed toward this verdict.
 110325,sensor_fault,0.6020172856429528,Verdict: sensor_fault (confidence: 60%). Main factor: mismatch between actual power and power expected from voltage x current (physical_inconsistency=0.113) pointed toward this verdict.
